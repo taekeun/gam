@@ -1,0 +1,15 @@
+*.class
+log.txt
+screen_shot/
+
+
+# blade
+blade/log.txt
+blade/*.png
+blade/temp/
+
+# star
+star/log.txt
+star/*.png
+star/temp/
+
