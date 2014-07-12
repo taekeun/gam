@@ -31,20 +31,21 @@ size = map(int, size)
 print size[0], size[1]
 
 shot_count = 0
-mode = MonkeyRunner.choice('mode?', ['sub', 'full'], 'Choice')
-if mode == 0:
-	rect = [0, 0, size[1], size[0]]
-	while True:
-		rect = MonkeyRunner.input('rect:x, y, w, h', `rect[0]`+','+`rect[1]`+','+`rect[2]`+','+`rect[3]`, 'input rect', 'ok', 'cancel').split(',')
+rect = [0, 0, size[1], size[0]]
+while True:
+	mode = MonkeyRunner.choice('mode?', ['sub', 'full'], 'Choice')
+	if mode == 0:
+		rect = MonkeyRunner.input('rect(w:'+`size[0]`+'h:'+`size[1]`+'):x,y,w,h', `rect[0]`+','+`rect[1]`+','+`rect[2]`+','+`rect[3]`, 'input rect', 'ok', 'cancel').split(',')
 		rect = map(int, rect)
 		shot = device.takeSnapshot().getSubImage((rect[0], rect[1], rect[2], rect[3]))
-		shot.writeToFile(path+'/shot_'+`rect[0]`+'_'+`rect[1]`+'_'+`rect[2]`+'_'+`rect[3]`+'_'+`shot_count` + '.png','png')
+		shot.writeToFile(path+'/shot-'+`rect[0]`+'_'+`rect[1]`+'_'+`rect[2]`+'_'+`rect[3]`+'_'+`shot_count` + '.png','png')
 		shot_count += 1
-else:
-	while True:
+	elif mode == 1:
 		choice = MonkeyRunner.choice('take a shot?', ['yes', 'no', 'end'], 'Choice')
 		if  choice == 0:
-			device.takeSnapshot().writeToFile(path + '/shot_' + `shot_count` + '.png','png')
+			device.takeSnapshot().writeToFile(path + '/shot-' + `shot_count` + '.png','png')
 			shot_count += 1
 		elif choice == 2:
 			sys.exit(1) 
+	else:
+		sys.exit(1)

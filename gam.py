@@ -6,6 +6,7 @@ import commands
 import sys
 from datetime import datetime
 import subprocess
+import glob
 
 class Gam:
 	def __init__(self, name, device_name, path):
@@ -28,19 +29,29 @@ class Gam:
 
 		# Select Any One Device And Ask User's Choice. Select Actual Device To Execute
 		device = None
-		for i, d in enumerate(devices):
-			if d.find(device_name) >= 0:
-				device = d.split('\t')[0]
-				break
-		if device is None: self.exit("No "+ device_name + " devices found")
+		if len(devices) > 1:
+			for i, d in enumerate(devices):
+				if d.find(device_name) >= 0:
+					# device = d.split('\t')[0]
+					device = d
+					break
+			if device is None: self.exit("No "+ device_name + " devices found")
+		else:
+			device = devices[0]
+		device = device.split('\t')[0]
+		self.is_geny = device.split('.')[0].find('192') >= 0
 
 		self.device = MonkeyRunner.waitForConnection(5, device)
 		try:
 			self.width = self.device.getProperty('display.width')
 			self.height = self.device.getProperty('display.height')
+			if not self.width:
+				self.exit('fail device.getProperty("display.width")')
 			self.print_msg(`self.width` + "," + `self.height`)
+			#TODO 자바 SocketException 잡기
 		except:
-			self.exit("Unexpected error:" + sys.exc_info()[0])
+			print "retry get_device"
+			self.get_device(device_name)
 
 	def set_stages(self, **enums):
 		self.stages = self.enum(enums)
@@ -49,9 +60,13 @@ class Gam:
 	def enum(self, enums):
 	    return type('Enum', (), enums)
 
-	def set_ref(self, stage, position, acceptance):
-		path = self.path + 'images/'
-		file_name = path+stage+'_'+ str(position).strip('()').replace(', ', '_') +'.png'
+	def set_ref(self, stage, acceptance):
+		if self.is_geny:
+			path = self.path + 'images/'
+		else:
+			path = self.path + 'images_p/'
+		file_name = glob.glob(path+stage +'-*.png')[0]
+		position = tuple(map(int, file_name.split('-')[1].replace('.png', '').split('_')))
 		self.refs[stage] = (position, acceptance, MonkeyRunner.loadImageFromFile(file_name))
 		self.refs_key_ordered.append(stage)
 		# print 'set reference stage:' + stage +', position:' + str(position) + ', file:' + file_name
@@ -61,7 +76,7 @@ class Gam:
 		return sub.sameAs(self.refs[stage][2], self.refs[stage][1])
 
 	def current_stage(self, shot=None):
-		if shot is None : shot = self.device.takeSnapshot()
+		if shot is None : shot = self.take_snapshot()
 
 		for stage in self.refs_key_ordered[:]:
 			if self.check_stage(shot, stage): return stage
@@ -72,12 +87,19 @@ class Gam:
 		self.turn_start_time = datetime.now()
 
 	def take_snapshot(self):
-		return self.device.takeSnapshot()
+		try:
+			shot = self.device.takeSnapshot()
+			return shot
+		except:
+			print 'ERROR]fail to take_snapshot : ' + sys.exc_info()[0]
 
-	def screen_shot(self):
-		shot = self.take_snapshot() 
-		self.save_file(shot, 'current_shot')
-		return shot
+	def screen_shot(self, is_save=True):
+		try:
+			shot = self.take_snapshot() 
+			if is_save and shot: self.save_file(shot, 'current_shot')
+			return shot
+		except:
+			print 'ERROR]fail to screen_shot : ' + sys.exc_info()[0]
 
 	def save_file(self, image, name):
 		image.writeToFile(self.get_file_path(name), 'png')
@@ -86,8 +108,8 @@ class Gam:
 		return self.path + name + '.png'
 
 # actions
-	def touch(self, x, y, msg):
-		self.print_running(msg)
+	def touch(self, x, y, msg=None):
+		if msg: self.print_running(msg)
 		self.device.touch(x, y, MonkeyDevice.DOWN_AND_UP)
 		MonkeyRunner.sleep(1.0)
 
@@ -113,9 +135,12 @@ class Gam:
 			acceptance -= 0.1
 		if acceptance < 0.1: 
 			print message + ' fail to find acceptance'
-			self.compare_debug(ref, shot, acceptance)
+		self.compare_debug(ref, shot, acceptance)
 
 # utils
+	def battery_level(self):
+		return int(self.device.shell('cat /sys/class/power_supply/battery/capacity'))
+
 	def print_msg(self, msg):
 		msg = self.time_to_s(datetime.now()) + '|' + msg
 		print msg
