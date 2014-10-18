@@ -87,6 +87,26 @@ gam.set_ref(Stages.BO, 0.9)
 gam.set_ref(Stages.D, 0.8)
 
 
+def drag_to_top_right():
+    dragTo(True, True, False, False)
+
+def drag_to_bottom_right():
+    dragTo(False, True, True, False)
+
+def drag_to_bottom_left():
+    dragTo(False, False, True, True)
+
+def dragTo(t, r, b, l):
+    if t:
+        gam.device.drag((900, 5), (900, 970), 0.1, 10)
+    elif b:
+        gam.device.drag((900, 970), (900, 5), 0.1, 10)
+
+    if r:
+        gam.device.drag((1630, 300), (5, 300), 0.1, 10)
+    elif l:
+        gam.device.drag((5, 5), (1630, 5), 0.1, 10)
+
 def check_bonus():
     gam.touch(990, 970, '출석 보너스')
     MonkeyRunner.sleep(2.0)
@@ -111,9 +131,9 @@ def empty_bag():
             if line > max_line: break
 # -10,516,650:A, -11,117,467:B/P, -6,408,193:S, -5,863,090:N, -2,941,172:SSS, -27,357:SS, -1:C
             raw_pixel_int = shot.getRawPixelInt(290 + 190 * line, 1770)
-            print line
             if -6000000 > raw_pixel_int or -10000 < raw_pixel_int:
-                gam.touch(1770, 290 - 10 + 190 * (max_line - line), '장비창:' + `line`)
+                # gam.touch(1770, 290 - 10 + 190 * (max_line - line), '장비창:' + `line`)
+                gam.touch(1770, 290 - 10 + 190 * line, '장비창:' + `line`)
             line += 1
         elif stage is Stages.B_D:
             gam.touch(1309, 987, '판매')
@@ -289,7 +309,7 @@ def run_daily(is_infinity):
             MonkeyRunner.sleep(1.0)
             gam.touch(1088, 720, msg + '입장 하기-친구 없을시')
         elif stage is Stages.Q_B:
-            gam.touch(786, 725, dm + '가방 정리')
+            gam.touch(786, 725, msg + '가방 정리')
             MonkeyRunner.sleep(3.0)
         elif stage is Stages.B:
             empty_bag()
