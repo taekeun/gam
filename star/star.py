@@ -14,9 +14,9 @@ from gam import Gam
 
 gam = Gam('star', '192', 'monkey/star/')
 
-count = {'Q': 0, 'R': [0, 0], 'D': [0, 0]}
+count = {'Q': 0, 'R': [0, 0], 'D': [0, 0], 'A': [0, 0]}
 no_coin = [False, False]
-no_ticket_sleep = 60.0 * 20.0
+no_ticket_sleep = 60.0 * 10.0
 
 
 def add_quest():
@@ -32,6 +32,10 @@ def add_daily(is_succ):
     set_count(is_succ, 'D')
 
 
+def add_arena(is_succ):
+    set_count(is_succ, 'A')
+
+
 def set_count(is_succ, key):
     if (is_succ):
         count[key][0] += 1
@@ -45,16 +49,17 @@ def get_used_sinbal():
 
 
 Stages = gam.set_stages(
-    H='home', H_AD='home_ad', H_ADA='home_ada', H_A='home_a',
+    H='home', H_AD='home_ad', H_AD2='home_ad2', H_ADA='home_ada', H_A='home_a',
     M='map', M_A='map_a', R='raid', R_A='raid_a', R_R='raid_r',
     Q='quest', Q_F='quest_f', Q_B='quest_bag', Q_N='quest_n', Q_A='quest_a',
-    MI='migung', MI_A='migung_a', A='arena', A_A='arena_a',
+    MI='migung', MI_A='migung_a', A='arena', A_A='arena_a', A_R='arena_r', A_N='arena_n',
     P='play', P_A='play_a', P_R='play_r', P_RB='play_daily_boss', P_AUTO='play_auto',
     B='bag', B_L='bag_l', B_D='bag_detail', B_S='bag_s', B_SP='bag_sp', B_P1='bag_p1', B_P2='bag_p2',
-    BO='bonus', D='daily')
+    BO='bonus', BO_A='bonus_a', D='daily')
 
 gam.set_ref(Stages.H, 0.8)
 gam.set_ref(Stages.H_AD, 0.9)
+gam.set_ref(Stages.H_AD2, 0.9)
 # gam.set_ref(Stages.H_ADA, 0.9)
 gam.set_ref(Stages.H_A, 0.4)
 gam.set_ref(Stages.M, 0.9)
@@ -73,6 +78,7 @@ gam.set_ref(Stages.Q_F, 0.9)
 gam.set_ref(Stages.Q_B, 0.9)
 gam.set_ref(Stages.A, 0.9)
 gam.set_ref(Stages.A_A, 0.4)
+gam.set_ref(Stages.A_R, 0.9)
 gam.set_ref(Stages.MI, 0.9)
 gam.set_ref(Stages.MI_A, 0.4)
 gam.set_ref(Stages.B, 0.9)
@@ -84,17 +90,23 @@ gam.set_ref(Stages.B_SP, 0.9)
 gam.set_ref(Stages.B_P1, 0.4)
 gam.set_ref(Stages.B_P2, 0.4)
 gam.set_ref(Stages.BO, 0.9)
+gam.set_ref(Stages.BO_A, 0.3)
 gam.set_ref(Stages.D, 0.8)
+#custom check only
+gam.set_ref(Stages.A_N, 0.9)
 
 
 def drag_to_top_right():
     dragTo(True, True, False, False)
 
+
 def drag_to_bottom_right():
     dragTo(False, True, True, False)
 
+
 def drag_to_bottom_left():
     dragTo(False, False, True, True)
+
 
 def dragTo(t, r, b, l):
     if t:
@@ -107,11 +119,16 @@ def dragTo(t, r, b, l):
     elif l:
         gam.device.drag((5, 5), (1630, 5), 0.1, 10)
 
+
 def check_bonus():
     gam.touch(990, 970, '출석 보너스')
-    MonkeyRunner.sleep(2.0)
-    gam.touch(968, 720, '확인')
+    MonkeyRunner.sleep(3.0)
+    gam.touch(1000, 720, '확인')
 
+
+def check_auto(shot):
+    if gam.check_stage(shot, Stages.P_AUTO):
+        gam.touch(200, 1000, 'auto 켜기')
 
 def empty_bag():
     print '정리 시작'
@@ -129,7 +146,7 @@ def empty_bag():
                 MonkeyRunner.sleep(3.0)
                 continue
             if line > max_line: break
-# -10,516,650:A, -11,117,467:B/P, -6,408,193:S, -5,863,090:N, -2,941,172:SSS, -27,357:SS, -1:C
+            # -10,516,650:A, -11,117,467:B/P, -6,408,193:S, -5,863,090:N, -2,941,172:SSS, -27,357:SS, -1:C
             raw_pixel_int = shot.getRawPixelInt(290 + 190 * line, 1770)
             if -6000000 > raw_pixel_int or -10000 < raw_pixel_int:
                 # gam.touch(1770, 290 - 10 + 190 * (max_line - line), '장비창:' + `line`)
@@ -163,6 +180,8 @@ def check_home(stage, msg):
         return 2
     # elif stage is Stages.H_ADA:
     # gam.touch(1085, 720, msg+':광고 팝업 취소')
+    elif stage is Stages.H_AD2:
+        gam.touch(1000, 950, msg + '광고2 취소')
     elif stage is Stages.H_A:
         gam.touch(707, 725, msg + ':취소')
         MonkeyRunner.sleep(1.0)
@@ -191,7 +210,7 @@ def run_quest(is_infinity):
                 break
             elif no_coin[0]:
                 no_coin[0] = False
-                print 'no sinbal sleep' + `no_ticket_sleep / 60` + 'min'
+                print 'no ticket sleep' + `no_ticket_sleep / 60` + 'min'
                 MonkeyRunner.sleep(no_ticket_sleep)
         elif stage is Stages.Q_F:
             gam.touch(1474, 227, dm + '친구 선택')
@@ -205,6 +224,7 @@ def run_quest(is_infinity):
             empty_bag()
             MonkeyRunner.sleep(3.0)
         elif stage is Stages.P:
+            check_auto(shot)
             if is_played:
                 gam.touch(900, 80, dm + '동료 호출')
             else:
@@ -212,11 +232,12 @@ def run_quest(is_infinity):
                 is_played = True
         elif stage is Stages.P_R:
             gam.touch(1088, 994, dm + '모험 보상')
-        elif stage is Stages.BO:
+        elif stage is Stages.BO or stage is Stages.BO_A:
             check_bonus()
         else:
             gam.touch(1088, 994, dm + '동료맞이')
             gam.touch(1306, 994, dm + '탐험 성공/실패 : 확인, 동료맞이')
+            gam.debug('fail to find stage:' + stage)
 
 
 def run_raid(is_infinity):
@@ -242,10 +263,8 @@ def run_raid(is_infinity):
 
                 gam.touch(1789, 912, msg + ':모험하기')
         elif stage is Stages.M:
-            # 데스 크라운
-            gam.device.drag((900, 5), (900, 970), 0.1, 10)
-            gam.device.drag((1630, 300), (0, 300), 0.1, 10)
-            gam.touch(150, 854, msg + '데스 크라운')
+            drag_to_bottom_right()
+            gam.touch(500, 450, msg + '심연의 아퀼러스')
         elif stage is Stages.M_A:
             no_coin[1] = True
             gam.touch(1051, 756, msg + ':티켓 부족 확인')
@@ -258,6 +277,7 @@ def run_raid(is_infinity):
                 print 'no ticket sleep' + `no_ticket_sleep / 60` + 'min'
                 MonkeyRunner.sleep(no_ticket_sleep)
         elif stage is Stages.P:
+            check_auto(shot)
             is_played = True
             MonkeyRunner.sleep(10.0)
         elif stage is Stages.P_A:
@@ -315,6 +335,7 @@ def run_daily(is_infinity):
             empty_bag()
             MonkeyRunner.sleep(3.0)
         elif stage is Stages.P:
+            check_auto(shot)
             if gam.check_stage(shot, Stages.P_RB):
                 gam.touch(1131, 85, msg + '동료 호출')
             is_played = True
@@ -326,25 +347,81 @@ def run_daily(is_infinity):
             gam.touch(1789, 5, msg + ':탐험실패')
             gam.touch(1306, 994, msg + '탐험 성공/실패 : 확인, 동료맞이')
 
+
+def run_arena(is_infinity):
+    mode = '아레나:'
+    is_played = False
+
+    while True:
+        shot = gam.screen_shot()
+        stage = gam.current_stage(shot)
+        msg = mode + stage
+
+        if stage is Stages.A:
+            if is_played is True:
+                is_played = False
+                add_arena(True)
+                if not is_infinity: break
+            elif not is_infinity and no_coin[1] is True:
+                break
+
+            gam.touch(1500, 950, msg + ':아레나도전')
+        elif stage is Stages.A_A:
+            gam.touch(1000, 700, msg + '아레나 도전 확인 / 티켓 부족 확인')
+            if gam.check_stage(shot, Stages.A_N):
+                if is_infinity:
+                    print 'no ticket sleep' + `no_ticket_sleep / 60` + 'min'
+                    MonkeyRunner.sleep(no_ticket_sleep)
+                else:
+                    no_coin[1] = True
+        elif stage is Stages.P:
+            check_auto(shot)
+            is_played = True
+            gam.touch(500, 1000, msg + '동료호출')
+        else:
+            gam.touch(1040, 1020, msg + '승리/실패, 점수확인')
+            gam.debug('fail to find stage:' + msg)
+
+
 # shot = gam.take_snapshot()
-# stage = Stages.Q
+# stage = Stages.BO_A
 # ref = gam.refs[stage]
 # gam.find_acceptance(stage, ref[2], shot.getSubImage(ref[0]))
 # empty_bag()
 # gam.exit()
 
-modes = ['QR', 'Quest', 'Raid', 'Migung']
+modes = ['QR', 'QA', 'Quest', 'Raid', 'Migung', 'Arena']
 if len(sys.argv) is 1:
     sys.argv.append(modes[0])
 
 if len(sys.argv) is not 2 or not sys.argv[1] in modes:
     print 'usage: ./monkeyrunner monkey/star/star.py [mode]'
-    print 'mode: QR, Quest, Raid, Migung'
+    print 'mode: QR, Quest, Raid, Migung, Arena'
     gam.exit()
 mode = sys.argv[1]
 
 print 'start'
 gam.debug('start:' + mode)
+
+
+def play_sinbal():
+    # 1D : 1Q
+    # 수:공속, 목:변뎀, 금:기공
+    # if get_used_sinbal() % 5 is 0:
+    # run_daily(False)
+    # else:
+    if get_used_sinbal() % 2 is 0:
+        drag_to_bottom_left()
+        gam.touch(1500, 450, 'Quest:수호자의 무덤')  # drag_to_bottom_left()
+    else:
+        drag_to_top_right()
+        gam.touch(1300, 360, 'Quest:수정궁전')  # drag_to_top_right()
+
+    for i in range(1): run_quest(False)
+
+    gam.back()  # Map
+    MonkeyRunner.sleep(1.0)
+
 
 if mode == 'QR':
     while True:
@@ -355,29 +432,29 @@ if mode == 'QR':
         no_coin[1] = False
         for i in range(1): run_raid(False)
 
-        gam.touch(707, 725, 'QR:취소')
-        MonkeyRunner.sleep(1.0)
-        gam.touch(783, 720, 'QR:레이드 초대 거절 확인')
-        MonkeyRunner.sleep(1.0)
         gam.touch(1789, 912, 'QR:모험하기')
 
-        # 1D : 1Q
-        if get_used_sinbal() % 2 is 0:
-            run_daily(False)
-        else:
-            # gam.touch(572, 943, 'QR:전설선택')
-            gam.device.drag((900, 970), (900, 0), 0.1, 10)  # 맵 이동
-            gam.device.drag((0, 660), (1630, 660), 0.1, 10)
-            gam.touch(400, 540, 'QR:사막지대')
-            # gam.device.drag((900, 0), (900, 970), 0.1, 10) #맵 이동
-            # gam.device.drag((1630, 660), (0, 660), 0.1, 10)
-            # gam.touch(455, 811, 'QR:존의호박밭')
+        play_sinbal()
 
-            for i in range(1): run_quest(False)
-
-        gam.back()  # Map
-        MonkeyRunner.sleep(1.0)
         gam.back()  # Home
+        MonkeyRunner.sleep(1.0)
+if mode == 'QA':
+    while True:
+        if no_coin[0] and no_coin[1]:
+            print 'no sinbal, ticket sleep ' + `no_ticket_sleep / 60` + 'min'
+            MonkeyRunner.sleep(no_ticket_sleep)
+        no_coin[0] = False
+        no_coin[1] = False
+
+        gam.touch(1600, 900, 'QA:아레나대전')
+        for i in range(1): run_arena(False)
+        gam.back()
+        MonkeyRunner.sleep(1.0)
+
+        if check_home(gam.current_stage(), 'QA:') > 0:
+            gam.touch(1789, 912, 'QA:모험하기')
+
+        play_sinbal()
         MonkeyRunner.sleep(1.0)
 elif mode == 'Quest':  # 퀘스트, 사막지대 최적화
     run_quest(True)
@@ -401,3 +478,5 @@ elif mode == 'Migung':  # 미궁
         gam.touch(1088, 782, msg + '미궁도전확인')
         gam.touch(1131, 85, msg + '미궁안')
         gam.touch(979, 1025, msg + '점수확인')
+elif mode == 'Arena':
+    run_arena(True)

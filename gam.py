@@ -96,7 +96,7 @@ class Gam:
         except:
             print 'ERROR]fail to take_snapshot : ' + sys.exc_info()[0]
 
-    def screen_shot(self, is_save=True):
+    def screen_shot(self, is_save=False):
         try:
             shot = self.take_snapshot()
             if is_save and shot: self.save_file(shot, 'current_shot')
