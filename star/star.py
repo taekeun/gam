@@ -54,8 +54,8 @@ Stages = gam.set_stages(
     Q='quest', Q_F='quest_f', Q_B='quest_bag', Q_N='quest_n', Q_A='quest_a',
     MI='migung', MI_A='migung_a', A='arena', A_A='arena_a', A_R='arena_r', A_N='arena_n',
     P='play', P_A='play_a', P_R='play_r', P_RB='play_daily_boss', P_AUTO='play_auto',
-    B='bag', B_L='bag_l', B_D='bag_detail', B_S='bag_s', B_SP='bag_sp', B_P1='bag_p1', B_P2='bag_p2',
-    BO='bonus', BO_A='bonus_a', D='daily')
+    B='bag', B_L='bag_l', B_D='bag_detail', B_S='bag_s', B_SP='bag_sp', B_P0='bag_p0',
+    BO='bonus', BO_A='bonus_a', D='daily', Q_O='quest_open')
 
 gam.set_ref(Stages.H, 0.8)
 gam.set_ref(Stages.H_AD, 0.9)
@@ -87,13 +87,13 @@ gam.set_ref(Stages.B_L, 0.6)
 gam.set_ref(Stages.B_D, 0.9)
 gam.set_ref(Stages.B_S, 0.9)
 gam.set_ref(Stages.B_SP, 0.9)
-gam.set_ref(Stages.B_P1, 0.4)
-gam.set_ref(Stages.B_P2, 0.4)
+gam.set_ref(Stages.B_P0, 0.4)
 gam.set_ref(Stages.BO, 0.9)
 gam.set_ref(Stages.BO_A, 0.3)
 gam.set_ref(Stages.D, 0.8)
-#custom check only
+# custom check only
 gam.set_ref(Stages.A_N, 0.9)
+gam.set_ref(Stages.Q_O, 0.9)
 
 
 def drag_to_top_right():
@@ -130,10 +130,11 @@ def check_auto(shot):
     if gam.check_stage(shot, Stages.P_AUTO):
         gam.touch(200, 1000, 'auto 켜기')
 
+
 def empty_bag():
     print '정리 시작'
-    line = 0
-    max_line = 3
+    line = 3
+    # max_line = 3
     fail_count = 0
     while True:
         shot = gam.take_snapshot()
@@ -145,19 +146,18 @@ def empty_bag():
                 gam.touch(1600, 940, '장비창 이동')
                 MonkeyRunner.sleep(3.0)
                 continue
-            if line > max_line: break
+            if line < 0: break
             # -10,516,650:A, -11,117,467:B/P, -6,408,193:S, -5,863,090:N, -2,941,172:SSS, -27,357:SS, -1:C
             raw_pixel_int = shot.getRawPixelInt(290 + 190 * line, 1770)
             if -6000000 > raw_pixel_int or -10000 < raw_pixel_int:
-                # gam.touch(1770, 290 - 10 + 190 * (max_line - line), '장비창:' + `line`)
-                gam.touch(1770, 290 - 10 + 190 * line, '장비창:' + `line`)
-            line += 1
+                gam.touch(1770, 290 - 10 + 190 * (3 - line), '장비창:' + `line`)
+            line -= 1
         elif stage is Stages.B_D:
             gam.touch(1309, 987, '판매')
         elif stage is Stages.B_S:
             gam.touch(794, 730, '등급판매')
         elif stage is Stages.B_SP:
-            if gam.check_stage(shot, Stages.B_P1) or gam.check_stage(shot, Stages.B_P2):
+            if gam.check_stage(shot, Stages.B_P0):# or gam.check_stage(shot, Stages.B_P2):
                 gam.touch(1180, 730, '물약 판매')
             else:
                 gam.touch(794, 730, '취소')
@@ -167,11 +167,16 @@ def empty_bag():
             print '장비 정리 화면 인식 실패:' + `fail_count`
     print '정리 끝'
     gam.back()
+    MonkeyRunner.sleep(1.0)
 
 
 def check_home(stage, msg):
     if stage is Stages.H:
         gam.touch(1850, 800, msg + ':레이드 초대 취소')
+        MonkeyRunner.sleep(1.0)
+        gam.touch(707, 725, msg + ':취소')
+        MonkeyRunner.sleep(1.0)
+        gam.touch(783, 720, msg + ':레이드 초대 거절 확인')
         return 1
     elif stage is Stages.H_AD:
         gam.touch(761, 975, msg + ':광고 취소')
@@ -383,11 +388,27 @@ def run_arena(is_infinity):
             gam.debug('fail to find stage:' + msg)
 
 
+def run_levelup():
+    # 로비 > 맵으로
+    # 맵 > 퀘스트
+    # 퀘스트 선택
+
+    shot = gam.take_snapshot()
+    gam.find_acceptance("message", gam.refs[Stages.Q_O][2], shot.getSubImage((712, 625, 30, 30)))
+    gam.find_acceptance("message", gam.refs[Stages.Q_O][2], shot.getSubImage((464, 625, 30, 30)))
+    # sub = shot.getSubImage(self.refs[stage][0])
+    # return sub.sameAs(self.refs[stage][2], self.refs[stage][1])
+
+    # 퀘스트 진행
+    # 퀘스트 선택 or 맵으로
+
+
 # shot = gam.take_snapshot()
-# stage = Stages.BO_A
+# stage = Stages.Q_O
 # ref = gam.refs[stage]
 # gam.find_acceptance(stage, ref[2], shot.getSubImage(ref[0]))
 # empty_bag()
+# run_levelup()
 # gam.exit()
 
 modes = ['QR', 'QA', 'Quest', 'Raid', 'Migung', 'Arena']
@@ -406,21 +427,30 @@ gam.debug('start:' + mode)
 
 def play_sinbal():
     # 1D : 1Q
-    # 수:공속, 목:변뎀, 금:기공
-    # if get_used_sinbal() % 5 is 0:
-    # run_daily(False)
-    # else:
-    if get_used_sinbal() % 2 is 0:
-        drag_to_bottom_left()
-        gam.touch(1500, 450, 'Quest:수호자의 무덤')  # drag_to_bottom_left()
+    # 수2:공속, 목3:변뎀, 금4:기공
+    today_weekday = time.localtime().tm_wday
+    is_go_daily_day = False
+    if today_weekday == 2 or today_weekday == 3 or today_weekday == 4:
+        is_go_daily_day = True
+
+    if is_go_daily_day and get_used_sinbal() % 3 is 0:
+        gam.touch(650, 50, 'Quest:Go to Map1')
+        MonkeyRunner.sleep(1.0)
+        run_daily(False)
     else:
-        drag_to_top_right()
-        gam.touch(1300, 360, 'Quest:수정궁전')  # drag_to_top_right()
+        if get_used_sinbal() % 2 is 0:
+            drag_to_bottom_left()
+            gam.touch(1500, 450, 'Quest:수호자의 무덤')  # drag_to_bottom_left()
+        else:
+            drag_to_top_right()
+            gam.touch(1300, 360, 'Quest:수정궁전')  # drag_to_top_right()
 
-    for i in range(1): run_quest(False)
+        for i in range(1): run_quest(False)
 
+    MonkeyRunner.sleep(1.0)
     gam.back()  # Map
     MonkeyRunner.sleep(1.0)
+    gam.touch(1300, 50, 'Quest:Go to Map2')
 
 
 if mode == 'QR':
@@ -447,8 +477,10 @@ if mode == 'QA':
         no_coin[1] = False
 
         gam.touch(1600, 900, 'QA:아레나대전')
-        for i in range(1): run_arena(False)
-        gam.back()
+        for i in range(1):
+            run_arena(False)
+        MonkeyRunner.sleep(1.0)
+        gam.back('QA:아레나 Back')
         MonkeyRunner.sleep(1.0)
 
         if check_home(gam.current_stage(), 'QA:') > 0:

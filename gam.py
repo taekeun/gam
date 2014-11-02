@@ -116,7 +116,9 @@ class Gam:
         self.device.touch(x, y, MonkeyDevice.DOWN_AND_UP)
         MonkeyRunner.sleep(1.0)
 
-    def back(self):
+    def back(self, msg=None):
+        if msg:
+            print msg
         self.device.press('KEYCODE_BACK', MonkeyDevice.DOWN_AND_UP)
 
     # appeptance
