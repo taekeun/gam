@@ -55,7 +55,7 @@ Stages = gam.set_stages(
     MI='migung', MI_A='migung_a', A='arena', A_A='arena_a', A_R='arena_r', A_N='arena_n',
     P='play', P_A='play_a', P_R='play_r', P_RB='play_daily_boss', P_AUTO='play_auto',
     B='bag', B_L='bag_l', B_D='bag_detail', B_S='bag_s', B_SP='bag_sp', B_P0='bag_p0',
-    BO='bonus', BO_A='bonus_a', D='daily', Q_O='quest_open')
+    BO='bonus', BO_A='bonus_a', D='daily', Q_O='quest_open', B_HP='boss_hp')
 
 gam.set_ref(Stages.H, 0.8)
 gam.set_ref(Stages.H_AD, 0.9)
@@ -94,6 +94,7 @@ gam.set_ref(Stages.D, 0.8)
 # custom check only
 gam.set_ref(Stages.A_N, 0.9)
 gam.set_ref(Stages.Q_O, 0.9)
+gam.set_ref(Stages.B_HP, 0.9)
 
 
 def drag_to_top_right():
@@ -129,6 +130,14 @@ def check_bonus():
 def check_auto(shot):
     if gam.check_stage(shot, Stages.P_AUTO):
         gam.touch(200, 1000, 'auto 켜기')
+
+
+def check_boss_hp_and_use_scroll(shot):
+    if gam.check_stage(shot, Stages.B_HP):
+        gam.print_msg("low boss hp")
+        gam.touch(1550, 1000, 'scroll 1')
+        gam.touch(1700, 1000, 'scroll 2')
+        gam.touch(1850, 1000, 'scroll 3')
 
 
 def empty_bag():
@@ -268,8 +277,8 @@ def run_raid(is_infinity):
 
                 gam.touch(1789, 912, msg + ':모험하기')
         elif stage is Stages.M:
-            drag_to_bottom_right()
-            gam.touch(500, 450, msg + '심연의 아퀼러스')
+            drag_to_bottom_left()
+            gam.touch(400, 220, msg + '황천의 벨무트')
         elif stage is Stages.M_A:
             no_coin[1] = True
             gam.touch(1051, 756, msg + ':티켓 부족 확인')
@@ -283,15 +292,17 @@ def run_raid(is_infinity):
                 MonkeyRunner.sleep(no_ticket_sleep)
         elif stage is Stages.P:
             check_auto(shot)
-            is_played = True
-            MonkeyRunner.sleep(10.0)
+            if not is_played:
+                is_played = True
+                MonkeyRunner.sleep(20.0)
+            check_boss_hp_and_use_scroll(shot)
         elif stage is Stages.P_A:
             gam.touch(1131, 85, msg + ':동료 호출')
         elif stage is Stages.R:
             gam.touch(1700, 975, msg + ':레이드 시작')
         elif stage is Stages.R_A:
             gam.touch(1360, 765, msg + ':시작 확인')
-        elif stage is Stages.BO:
+        elif stage is Stages.BO or stage is Stages.BO_A:
             check_bonus()
         elif stage is Stages.R_R:
             is_succ = True
@@ -438,17 +449,19 @@ def play_sinbal():
         MonkeyRunner.sleep(1.0)
         run_daily(False)
     else:
-        if get_used_sinbal() % 2 is 0:
-            drag_to_bottom_left()
-            gam.touch(1500, 450, 'Quest:수호자의 무덤')  # drag_to_bottom_left()
-        else:
-            drag_to_top_right()
-            gam.touch(1300, 360, 'Quest:수정궁전')  # drag_to_top_right()
+        # if get_used_sinbal() % 2 is 0:
+        #     drag_to_bottom_left()
+        #     gam.touch(1500, 450, 'Quest:수호자의 무덤')  # drag_to_bottom_left()
+        # else:
+        #     drag_to_top_right()
+        #     gam.touch(1300, 360, 'Quest:수정궁전')  # drag_to_top_right()
+        drag_to_bottom_left()
+        gam.touch(1000, 550, 'Quest:가시구릉') #drag_to_bottom_left()
 
         for i in range(1): run_quest(False)
 
     MonkeyRunner.sleep(1.0)
-    gam.back()  # Map
+    gam.back('back')  # Map
     MonkeyRunner.sleep(1.0)
     gam.touch(1300, 50, 'Quest:Go to Map2')
 
