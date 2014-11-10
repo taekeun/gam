@@ -12,7 +12,7 @@ import time
 sys.path.insert(0, 'monkey')
 from gam import Gam
 
-gam = Gam('star', '192', 'monkey/star/')
+gam = Gam('star', '192.168.56.101', 'monkey/star/')
 
 count = {'Q': 0, 'R': [0, 0], 'D': [0, 0], 'A': [0, 0]}
 no_coin = [False, False]
@@ -55,7 +55,7 @@ Stages = gam.set_stages(
     MI='migung', MI_A='migung_a', A='arena', A_A='arena_a', A_R='arena_r', A_N='arena_n',
     P='play', P_A='play_a', P_R='play_r', P_RB='play_daily_boss', P_AUTO='play_auto',
     B='bag', B_L='bag_l', B_D='bag_detail', B_S='bag_s', B_SP='bag_sp', B_P0='bag_p0',
-    BO='bonus', BO_A='bonus_a', D='daily', Q_O='quest_open', B_HP='boss_hp')
+    BO='bonus', BO_A='bonus_a', D='daily', B_HP='boss_hp')
 
 gam.set_ref(Stages.H, 0.8)
 gam.set_ref(Stages.H_AD, 0.9)
@@ -93,7 +93,6 @@ gam.set_ref(Stages.BO_A, 0.3)
 gam.set_ref(Stages.D, 0.8)
 # custom check only
 gam.set_ref(Stages.A_N, 0.9)
-gam.set_ref(Stages.Q_O, 0.9)
 gam.set_ref(Stages.B_HP, 0.9)
 
 
@@ -397,21 +396,6 @@ def run_arena(is_infinity):
         else:
             gam.touch(1040, 1020, msg + '승리/실패, 점수확인')
             gam.debug('fail to find stage:' + msg)
-
-
-def run_levelup():
-    # 로비 > 맵으로
-    # 맵 > 퀘스트
-    # 퀘스트 선택
-
-    shot = gam.take_snapshot()
-    gam.find_acceptance("message", gam.refs[Stages.Q_O][2], shot.getSubImage((712, 625, 30, 30)))
-    gam.find_acceptance("message", gam.refs[Stages.Q_O][2], shot.getSubImage((464, 625, 30, 30)))
-    # sub = shot.getSubImage(self.refs[stage][0])
-    # return sub.sameAs(self.refs[stage][2], self.refs[stage][1])
-
-    # 퀘스트 진행
-    # 퀘스트 선택 or 맵으로
 
 
 # shot = gam.take_snapshot()

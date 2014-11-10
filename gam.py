@@ -33,9 +33,10 @@ class Gam:
         if len(devices) > 1:
             for i, d in enumerate(devices):
                 if d.find(device_name) >= 0:
-                    # device = d.split('\t')[0]
                     device = d
                     break
+            # choice = MonkeyRunner.choice('select device', devices, 'Choice')
+            # device = devices[choice]
             if device is None: self.exit("No " + device_name + " devices found")
         else:
             device = devices[0]
@@ -174,3 +175,6 @@ class Gam:
         msg = self.print_msg(self.name + '|' + msg)
         log_file.write(msg + '\n')
         log_file.close()
+
+    def sleep(self, sec):
+        MonkeyRunner.sleep(sec)

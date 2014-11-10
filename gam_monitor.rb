@@ -66,7 +66,7 @@ def check_process(name)
 end
 
 puts 'Start Gam Monitor'
-games = {'blade'=>Game.new('blade', 60*15), 'star'=>Game.new('star', 60*25)}
+games = {'blade'=>Game.new('blade', 60*15), 'star'=>Game.new('star', 60*25), 'star_lv'=>Game.new('star_lv', 60*25)}
 
 notifier = Notifier.new
 
@@ -96,7 +96,7 @@ while true
 		logs = line.split('|')
 		next unless logs.size == 4
 		game = games[logs[1]]
-		next if game.is_check
+		next if game.nil? or game.is_check
 
 		game.is_check = true
 		time = 	Time.parse('2014-'+logs[0])
