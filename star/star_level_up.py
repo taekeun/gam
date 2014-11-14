@@ -12,7 +12,6 @@ import time
 sys.path.insert(0, 'monkey')
 from gam import Gam
 
-gam = Gam('star_lv', '192.168.56.102', 'monkey/star/')
 
 count = {'Q': 0, 'R': [0, 0], 'D': [0, 0], 'A': [0, 0]}
 no_coin = [False, False]
@@ -34,58 +33,6 @@ def set_count(is_succ, key):
 
 def get_used_sinbal():
     return count['Q'] + sum(count['D']);
-
-
-Stages = gam.set_stages(
-    H='home', H_AD='home_ad', H_AD2='home_ad2', H_ADA='home_ada', H_A='home_a',
-    M='map', M_A='map_a', R='raid', R_A='raid_a', R_R='raid_r',
-    Q='quest', Q_C='quest_close', Q_F='quest_f', Q_B='quest_bag', Q_N='quest_n', Q_A='quest_a',
-    MI='migung', MI_A='migung_a', A='arena', A_A='arena_a', A_R='arena_r', A_N='arena_n',
-    P='play', P_A='play_a', P_R='play_r', P_RB='play_daily_boss', P_AUTO='play_auto',
-    B='bag', B_L='bag_l', B_D='bag_detail', B_S='bag_s', B_SP='bag_sp', B_P0='bag_p0',
-    BO='bonus', BO_A='bonus_a', D='daily', B_HP='boss_hp', Q_CA='quest_close_a',
-    C_N='colleague_n')
-
-gam.set_ref(Stages.H, 0.8)
-gam.set_ref(Stages.H_AD, 0.9)
-gam.set_ref(Stages.H_AD2, 0.9)
-# gam.set_ref(Stages.H_ADA, 0.9)
-gam.set_ref(Stages.H_A, 0.4)
-gam.set_ref(Stages.M, 0.9)
-gam.set_ref(Stages.M_A, 0.4)
-gam.set_ref(Stages.R, 0.8)
-gam.set_ref(Stages.R_A, 0.4)
-gam.set_ref(Stages.R_R, 0.9)
-gam.set_ref(Stages.P, 0.9)
-gam.set_ref(Stages.P_A, 0.4)
-gam.set_ref(Stages.P_R, 0.9)
-gam.set_ref(Stages.P_RB, 0.9)
-gam.set_ref(Stages.P_AUTO, 0.9)
-gam.set_ref(Stages.Q, 0.9)
-gam.set_ref(Stages.Q_C, 0.9)
-gam.set_ref(Stages.Q_N, 0.9)
-gam.set_ref(Stages.Q_F, 0.9)
-gam.set_ref(Stages.Q_B, 0.9)
-gam.set_ref(Stages.A, 0.9)
-gam.set_ref(Stages.A_A, 0.4)
-gam.set_ref(Stages.A_R, 0.9)
-gam.set_ref(Stages.MI, 0.9)
-gam.set_ref(Stages.MI_A, 0.4)
-gam.set_ref(Stages.B, 0.9)
-# gam.set_ref(Stages.B_L2, 0.6)
-gam.set_ref(Stages.B_L, 0.6)
-gam.set_ref(Stages.B_D, 0.9)
-gam.set_ref(Stages.B_S, 0.9)
-gam.set_ref(Stages.B_SP, 0.9)
-gam.set_ref(Stages.B_P0, 0.4)
-gam.set_ref(Stages.BO, 0.9)
-gam.set_ref(Stages.BO_A, 0.3)
-gam.set_ref(Stages.D, 0.8)
-gam.set_ref(Stages.C_N, 0.8)
-# custom check only
-gam.set_ref(Stages.A_N, 0.9)
-gam.set_ref(Stages.B_HP, 0.9)
-gam.set_ref(Stages.Q_CA, 0.9)
 
 
 def drag_to_top_right():
@@ -123,6 +70,7 @@ def drag_by_direction(direction):
 
 
 def check_bonus():
+    gam.touch(1000, 850, '뉴비 출석 보너스')
     gam.touch(990, 970, '출석 보너스')
     MonkeyRunner.sleep(3.0)
     gam.touch(1000, 720, '확인')
@@ -203,7 +151,7 @@ def check_home(stage, msg):
 
 
 def is_quest(stage):
-    return stage is Stages.Q or stage is Stages.Q_C
+    return stage is Stages.Q or stage is Stages.Q_C or stage is Stages.Q_BO
 
 
 def go_to_quest(last_quest, msg=""):
@@ -231,8 +179,8 @@ def go_to_quest(last_quest, msg=""):
 
         {'no':18, 'name':'존의 호박밭', 'point':(500, 800), 'di':'rt', 'sq':9},
         {'no':19, 'name':'성의 입구', 'point':(1200, 300), 'di':'lb`', 'sq':9},
-        {'no':20, 'name':'안개 낀 성벽', 'point':(1700, 380), 'di':'lb', 'sq':9},
-        {'no':21, 'name':'랜딩 가든', 'point':(1400, 400), 'di':'lb', 'sq':9},
+        {'no':20, 'name':'랜딩 가든', 'point':(1400, 400), 'di':'lb', 'sq':9},
+        {'no':21, 'name':'안개 낀 성벽', 'point':(1700, 380), 'di':'lb', 'sq':9},
         {'no':22, 'name':'성채', 'point':(1500, 250), 'di':'lb', 'sq':9},
     ]
 
@@ -240,6 +188,8 @@ def go_to_quest(last_quest, msg=""):
         index = len(quests) -1
     else:
         index = last_quest['no']
+        if index >= len(quests):
+            return None
     while True:
         q = quests[index]
         drag_by_direction(q['di'])
@@ -303,12 +253,14 @@ def run_levelup():
             gam.touch(1789, 912, msg + '모험하기')
         elif stage is Stages.M:
             cur_quest = go_to_quest(cur_quest, msg)
+            if cur_quest is None:
+                gam.back()
         elif is_quest(stage):
             if is_played:
                 is_played = False
                 add_quest()
                 if cur_sub_quest is not None and cur_quest is not None and cur_sub_quest >= cur_quest['sq']:
-                    cur_sub_quest = None
+                    cur_sub_quest = 3
                     gam.back(msg + cur_quest['name'] + " 완료")
                     continue
             cur_sub_quest = go_to_sub_quest(cur_sub_quest, msg)
@@ -336,19 +288,93 @@ def run_levelup():
                 is_played = True
                 gam.touch(900, 80, msg + '동료 호출')
                 MonkeyRunner.sleep(10.0)
+            MonkeyRunner.sleep(1.0)
         elif stage is Stages.P_R:
             gam.touch(1088, 994, msg + '모험 보상')
-        elif stage is Stages.BO or stage is Stages.BO_A:
+        elif stage is Stages.BO or stage is Stages.BO_A or stage is Stages.BO_N or stage is Stages.BO_N_A:
             check_bonus()
         elif stage is Stages.C_N:
             gam.touch(1088, 994, msg + '동료맞이')
+        elif stage is Stages.B_SP: #동료 빈자리
+            gam.touch(1180, 730, '동료 만땅 진행')
+        elif stage is Stages.Q_FA: #퀘 실패
+            gam.touch(1200, 1000, '모험 실패 확인')
+            if cur_sub_quest is not None and cur_sub_quest >  3:
+                cur_sub_quest = 3
         else:
             gam.touch(1306, 850, msg + '탐험 성공/실패 : 확인')
             gam.debug('fail to find stage:' + stage)
 
 
+if len(sys.argv) is 1:
+    sys.argv.append(2)
+
+if len(sys.argv) is not 2:
+    print 'usage: ./monkeyrunner monkey/star_level_up.py [index]'
+    gam.exit()
+device_index = sys.argv[1]
+
+gam = Gam('star_lv', '192.168.56.10' + str(device_index), 'monkey/star/')
+
+
+Stages = gam.set_stages(
+    H='home', H_AD='home_ad', H_AD2='home_ad2', H_ADA='home_ada', H_A='home_a',
+    M='map', M_A='map_a', R='raid', R_A='raid_a', R_R='raid_r',
+    Q='quest', Q_C='quest_close', Q_BO='quest_boss', Q_F='quest_f', Q_B='quest_bag', Q_N='quest_n', Q_A='quest_a', Q_FA='quest_fail',
+    MI='migung', MI_A='migung_a', A='arena', A_A='arena_a', A_R='arena_r', A_N='arena_n',
+    P='play', P_A='play_a', P_R='play_r', P_RB='play_daily_boss', P_AUTO='play_auto',
+    B='bag', B_L='bag_l', B_D='bag_detail', B_S='bag_s', B_SP='bag_sp', B_P0='bag_p0',
+    BO='bonus', BO_A='bonus_a', BO_N='bonus_new', BO_N_A='bonus_new_a', D='daily', B_HP='boss_hp', Q_CA='quest_close_a',
+    C_N='colleague_n')
+
+gam.set_ref(Stages.H, 0.8)
+gam.set_ref(Stages.H_AD, 0.9)
+gam.set_ref(Stages.H_AD2, 0.9)
+# gam.set_ref(Stages.H_ADA, 0.9)
+gam.set_ref(Stages.H_A, 0.4)
+gam.set_ref(Stages.M, 0.9)
+gam.set_ref(Stages.M_A, 0.4)
+gam.set_ref(Stages.R, 0.8)
+gam.set_ref(Stages.R_A, 0.4)
+gam.set_ref(Stages.R_R, 0.9)
+gam.set_ref(Stages.P, 0.9)
+gam.set_ref(Stages.P_A, 0.4)
+gam.set_ref(Stages.P_R, 0.9)
+gam.set_ref(Stages.P_RB, 0.9)
+gam.set_ref(Stages.P_AUTO, 0.9)
+gam.set_ref(Stages.Q, 0.9)
+gam.set_ref(Stages.Q_C, 0.9)
+gam.set_ref(Stages.Q_BO, 0.9)
+gam.set_ref(Stages.Q_N, 0.9)
+gam.set_ref(Stages.Q_F, 0.9)
+gam.set_ref(Stages.Q_B, 0.9)
+gam.set_ref(Stages.Q_FA, 0.9)
+gam.set_ref(Stages.A, 0.9)
+gam.set_ref(Stages.A_A, 0.4)
+gam.set_ref(Stages.A_R, 0.9)
+gam.set_ref(Stages.MI, 0.9)
+gam.set_ref(Stages.MI_A, 0.4)
+gam.set_ref(Stages.B, 0.9)
+# gam.set_ref(Stages.B_L2, 0.6)
+gam.set_ref(Stages.B_L, 0.6)
+gam.set_ref(Stages.B_D, 0.9)
+gam.set_ref(Stages.B_S, 0.9)
+gam.set_ref(Stages.B_SP, 0.9)
+gam.set_ref(Stages.B_P0, 0.4)
+gam.set_ref(Stages.BO, 0.9)
+gam.set_ref(Stages.BO_A, 0.3)
+gam.set_ref(Stages.BO_N, 0.8)
+gam.set_ref(Stages.BO_N_A, 0.3)
+gam.set_ref(Stages.D, 0.8)
+gam.set_ref(Stages.C_N, 0.8)
+# custom check only
+gam.set_ref(Stages.A_N, 0.9)
+gam.set_ref(Stages.B_HP, 0.9)
+gam.set_ref(Stages.Q_CA, 0.9)
+
+
 # shot = gam.take_snapshot()
-# stage = Stages.P_R
+# stage = Stages.BO_N
 # ref = gam.refs[stage]
 # gam.find_acceptance(stage, ref[2], shot.getSubImage(ref[0]))
 # empty_bag()

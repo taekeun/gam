@@ -142,7 +142,6 @@ def check_boss_hp_and_use_scroll(shot):
 def empty_bag():
     print '정리 시작'
     line = 3
-    # max_line = 3
     fail_count = 0
     while True:
         shot = gam.take_snapshot()
