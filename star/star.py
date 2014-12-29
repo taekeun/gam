@@ -83,7 +83,7 @@ gam.set_ref(Stages.MI, 0.9)
 gam.set_ref(Stages.MI_A, 0.4)
 gam.set_ref(Stages.B, 0.9)
 # gam.set_ref(Stages.B_L2, 0.6)
-gam.set_ref(Stages.B_L, 0.6)
+gam.set_ref(Stages.B_L, 0.5)
 gam.set_ref(Stages.B_D, 0.9)
 gam.set_ref(Stages.B_S, 0.9)
 gam.set_ref(Stages.B_SP, 0.9)
@@ -141,7 +141,10 @@ def check_boss_hp_and_use_scroll(shot):
 
 def empty_bag():
     print '정리 시작'
+    max_line = 3
+    max_bag = 3
     line = 3
+    bag = 1
     fail_count = 0
     while True:
         shot = gam.take_snapshot()
@@ -149,20 +152,24 @@ def empty_bag():
         if fail_count > 10: break
 
         if stage is Stages.B:
-            if not gam.check_stage(shot, Stages.B_L):
+            if line < 0:
+                line = max_line
+                if bag == max_bag: break
+                else: bag += 1
                 gam.touch(1600, 940, '장비창 이동')
                 MonkeyRunner.sleep(3.0)
                 continue
-            if line < 0: break
             # -10,516,650:A, -11,117,467:B/P, -6,408,193:S, -5,863,090:N, -2,941,172:SSS, -27,357:SS, -1:C
-            raw_pixel_int = shot.getRawPixelInt(290 + 190 * line, 1770)
+            raw_pixel_int = shot.getRawPixelInt(290 + 190 * line, 1758)
             if -6000000 > raw_pixel_int or -10000 < raw_pixel_int:
-                gam.touch(1770, 290 - 10 + 190 * (3 - line), '장비창:' + `line`)
+                gam.touch(1700, 290 - 10 + 190 * (3 - line), '장비창:' + `line`)
             line -= 1
         elif stage is Stages.B_D:
             gam.touch(1309, 987, '판매')
         elif stage is Stages.B_S:
-            gam.touch(794, 730, '등급판매')
+            gam.touch(794, 730, '등급 이하 판매')
+            MonkeyRunner.sleep(3.0)
+            break
         elif stage is Stages.B_SP:
             if gam.check_stage(shot, Stages.B_P0):# or gam.check_stage(shot, Stages.B_P2):
                 gam.touch(1180, 730, '물약 판매')
@@ -171,7 +178,7 @@ def empty_bag():
             gam.touch(1767, 111, '장비창 나가기')
         else:
             fail_count += 1
-            print '장비 정리 화면 인식 실패:' + `fail_count`
+            print '장비 정리 화면 인식 실패:' + `fail_count` + ':' + stage
     print '정리 끝'
     gam.back()
     MonkeyRunner.sleep(1.0)
@@ -398,10 +405,10 @@ def run_arena(is_infinity):
 
 
 # shot = gam.take_snapshot()
-# stage = Stages.Q_O
+# stage = Stages.A_A
 # ref = gam.refs[stage]
 # gam.find_acceptance(stage, ref[2], shot.getSubImage(ref[0]))
-# empty_bag()
+# empty_bag2()
 # run_levelup()
 # gam.exit()
 

@@ -16,7 +16,7 @@ from gam import Gam
 count = {'Q': 0, 'R': [0, 0], 'D': [0, 0], 'A': [0, 0]}
 no_coin = [False, False]
 no_ticket_sleep = 60.0 * 10.0
-
+restart_mode = False
 
 def add_quest():
     count['Q'] += 1
@@ -240,6 +240,7 @@ def go_to_sub_quest(last_sub_quest, msg=""):
 def run_levelup():
     # 맵 > 퀘스트
     # 퀘 클리어
+    global restart_mode
 
     msg = "LevelUp:"
     is_played = False
@@ -259,6 +260,10 @@ def run_levelup():
             if is_played:
                 is_played = False
                 add_quest()
+                if restart_mode:
+                    restart_mode = False
+                    gam.back(msg + "restart mode: Back for set quest.")
+                    continue
                 if cur_sub_quest is not None and cur_quest is not None and cur_sub_quest >= cur_quest['sq']:
                     cur_sub_quest = 3
                     gam.back(msg + cur_quest['name'] + " 완료")
@@ -305,14 +310,18 @@ def run_levelup():
             gam.touch(1306, 850, msg + '탐험 성공/실패 : 확인')
             gam.debug('fail to find stage:' + stage)
 
-
 if len(sys.argv) is 1:
     sys.argv.append(2)
 
-if len(sys.argv) is not 2:
+if len(sys.argv) < 2:
     print 'usage: ./monkeyrunner monkey/star_level_up.py [index]'
+    print 'options'
+    print '-r # restart'
     gam.exit()
 device_index = sys.argv[1]
+
+if len(sys.argv) == 3 and sys.argv[2] == '-r':
+    restart_mode = True
 
 gam = Gam('star_lv', '192.168.56.10' + str(device_index), 'monkey/star/')
 

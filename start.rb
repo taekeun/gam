@@ -7,13 +7,9 @@ if ARGV.size > 0
   device_index = ARGV[0]
 end
 
-if device_index.to_i < 2
-  puts "device_index #{device_index} < 2"
-  exit
-end
-
 @pid = nil
 @cmd = "monkeyrunner monkey/star/star_level_up.py #{device_index}"
+@option = ''
 
 def is_running(pid)
   return false if pid.nil?
@@ -31,11 +27,12 @@ while true
   unless is_running @pid
     unless @pid.nil?
       puts '비정상 종료 탐지.'
+      @option = ' -r'
       sleep(10)
     end
     begin
-      puts '[starter] starting ' + @cmd
-      PTY.spawn(@cmd) do |stdin, stdout, pid|
+      puts '[starter] starting ' + @cmd + @option
+      PTY.spawn(@cmd + @option) do |stdin, stdout, pid|
         puts @pid = pid
         stdin.each { |line| print line }
       end
